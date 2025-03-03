@@ -95,7 +95,10 @@ def go(args):
     if os.path.exists("random_forest_dir"):
         shutil.rmtree("random_forest_dir")
 
+    # Infer the model signature from the input data and the predicted labels
     signature = infer_signature(X_val.to_numpy(), y_pred)
+
+    # Save the model package in the MLFlow sklearn format
     mlflow.sklearn.save_model(
         sk_pipe,
         "random_forest_dir",
@@ -104,6 +107,7 @@ def go(args):
         input_example=X_val.iloc[:2],
     )
 
+    # Log the model pipe to W&B
     artifact = wandb.Artifact(
         args.output_artifact,
         type="model_export",
@@ -157,6 +161,7 @@ def get_inference_pipeline(rf_config, max_tfidf_features):
     # (nor during training). That is not true for neighbourhood_group
     ordinal_categorical_preproc = OrdinalEncoder()
 
+    # For non-ordinal categorical features, we use a one-hot encoding
     non_ordinal_categorical_preproc = make_pipeline(
         SimpleImputer(strategy="most_frequent"), OneHotEncoder()
     )
@@ -219,6 +224,7 @@ def get_inference_pipeline(rf_config, max_tfidf_features):
     # Create random forest
     random_forest = RandomForestRegressor(**rf_config)
 
+    # Create pipeline
     sk_pipe = Pipeline(
         steps=[("preprocessor", preprocessor), ("random_forest", random_forest)]
     )
